@@ -243,4 +243,4 @@ function hideWord(str) {
 	return str.length == 2 ?
 		str[0] + "*" :
 		str[0] + "*".repeat(str.length - 2) + str[str.length - 1];
-}
+					}
