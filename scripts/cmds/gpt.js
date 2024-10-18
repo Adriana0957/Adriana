@@ -1,84 +1,192 @@
 const axios = require('axios');
+const fs = require('fs-extra');
+const path = require('path');
+const ytdl = require("@neoxr/ytdl-core");
+const yts = require("yt-search");
+
+async function lado(api, event, args, message) {
+  try {
+    const songName = args.join(" ");
+    const searchResults = await yts(songName);
+
+    if (!searchResults.videos.length) {
+      message.reply("No song found for the given query.");
+      return;
+    }
+
+    const video = searchResults.videos[0];
+    const videoUrl = video.url;
+    const stream = ytdl(videoUrl, { filter: "audioonly" });
+    const fileName = `music.mp3`; 
+    const filePath = path.join(__dirname, "tmp", fileName);
+
+    stream.pipe(fs.createWriteStream(filePath));
+
+    stream.on('response', () => {
+      console.info('[DOWNLOADER]', 'Starting download now!');
+    });
+
+    stream.on('info', (info) => {
+      console.info('[DOWNLOADER]', `Downloading ${info.videoDetails.title} by ${info.videoDetails.author.name}`);
+    });
+
+    stream.on('end', () => {
+      const audioStream = fs.createReadStream(filePath);
+      message.reply({ attachment: audioStream });
+      api.setMessageReaction("✅", event.messageID, () => {}, true);
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    message.reply("Sorry, an error occurred while processing your request.");
+  }
+}
+
+async function kshitiz(api, event, args, message) {
+  try {
+    const query = args.join(" ");
+    const searchResults = await yts(query);
+
+    if (!searchResults.videos.length) {
+      message.reply("No videos found for the given query.");
+      return;
+    }
+
+    const video = searchResults.videos[0];
+    const videoUrl = video.url;
+    const stream = ytdl(videoUrl, { filter: "audioandvideo" }); 
+    const fileName = `music.mp4`;
+    const filePath = path.join(__dirname, "tmp", fileName);
+
+    stream.pipe(fs.createWriteStream(filePath));
+
+    stream.on('response', () => {
+      console.info('[DOWNLOADER]', 'Starting download now!');
+    });
+
+    stream.on('info', (info) => {
+      console.info('[DOWNLOADER]', `Downloading ${info.videoDetails.title} by ${info.videoDetails.author.name}`);
+    });
+
+    stream.on('end', () => {
+      const videoStream = fs.createReadStream(filePath);
+      message.reply({ attachment: videoStream });
+      api.setMessageReaction("✅", event.messageID, () => {}, true);
+    });
+  } catch (error) {
+    console.error(error);
+    message.reply("Sorry, an error occurred while processing your request.");
+  }
+}
+
+
+const a = {
+  name: "gpt",
+  aliases: ["chatgpt"],
+  version: "3.0",
+  author: "vex_kshitiz",
+  countDown: 5,
+  role: 0,
+  longDescription: "Chat with GPT-4",
+  category: "ai",
+  guide: {
+    en: "{p}gpt {prompt}"
+  }
+};
+
+async function b(c, d, e, f) {
+  try {
+    const g = await axios.get(`https://ai-tools.replit.app/gpt?prompt=${encodeURIComponent(c)}&uid=${d}&apikey=kshitiz`);
+    return g.data.gpt4;
+  } catch (h) {
+    throw h;
+  }
+}
+
+async function i(c) {
+  try {
+    const j = await axios.get(`https://ai-tools.replit.app/sdxl?prompt=${encodeURIComponent(c)}&styles=7`, { responseType: 'arraybuffer' });
+    return j.data;
+  } catch (k) {
+    throw k;
+  }
+}
+
+async function describeImage(prompt, photoUrl) {
+  try {
+    const url = `https://sandipbaruwal.onrender.com/gemini2?prompt=${encodeURIComponent(prompt)}&url=${encodeURIComponent(photoUrl)}`;
+    const response = await axios.get(url);
+    return response.data.answer;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function l({ api, message, event, args }) {
+  try {
+    const m = event.senderID;
+    const n = args.join(" ").trim();
+    const draw = args[0].toLowerCase() === "draw";
+    const prompt = args[0].toLowerCase() === "prompt";
+    const sendTikTok = args[0].toLowerCase() === "send";
+    const sing = args[0].toLowerCase() === "sing";
+
+    if (!n) {
+      return message.reply("Please provide a prompt.");
+    }
+
+    if (draw) {
+      await drawImage(message, n);
+    } else if (prompt) {
+      if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
+        const photoUrl = event.messageReply.attachments[0].url;
+        const description = await describeImage(n, photoUrl);
+        message.reply(`Description: ${description}`);
+      } else {
+        return message.reply("Please reply to an image to describe it.");
+        }
+    } else if (sendTikTok) {
+      await kshitiz(api, event, args.slice(1), message); 
+    } else if (sing) {
+      await lado(api, event, args.slice(1), message); 
+    } else {
+      const q = await b(n, m);
+      message.reply(q, (r, s) => {
+        global.GoatBot.onReply.set(s.messageID, {
+          commandName: a.name,
+          uid: m 
+        });
+      });
+    }
+  } catch (t) {
+    console.error("Error:", t.message);
+    message.reply("An error occurred while processing the request.");
+  }
+}
+
+async function drawImage(message, prompt) {
+  try {
+    const u = await i(prompt);
+
+    const v = path.join(__dirname, 'cache', `image_${Date.now()}.png`);
+    fs.writeFileSync(v, u);
+
+    message.reply({
+      body: "Generated image:",
+      attachment: fs.createReadStream(v)
+    });
+  } catch (w) {
+    console.error("Error:", w.message);
+    message.reply("An error occurred while processing the request.");
+  }
+}
 
 module.exports = {
-  config: {
-    name: 'gpt',
-    aliases: ['askgpt'],
-    version: '1.0',
-    author: 'UPoL',
-    role: 0,
-    shortDescription: {
-      en: 'Ask a question to GPT with multiple models'
-    },
-    longDescription: {
-      en: 'Ask a question to GPT with multiple models and get responses from various GPT models.'
-    },
-    category: 'CHAT-GPT',
-    guide: {
-      en: "{pn} <question> | <model>\n\nModels:\n'1' : 'gpt-4',\n'2' : 'gpt-4-0613',\n'3' : 'gpt-4-32k',\n'4' : 'gpt-4-0314',\n'5' : 'gpt-4-32k-0314',\n'6' : 'gpt-3.5-turbo',\n'7' : 'gpt-3.5-turbo-16k',\n'8' : 'gpt-3.5-turbo-0613',\n'9' : 'gpt-3.5-turbo-16k-0613',\n'10' : 'gpt-3.5-turbo-0301',\n'11' : 'text-davinci-003',\n'12' : 'text-davinci-002',\n'13' : 'code-davinci-002',\n'14' : 'gpt-3',\n'15' : 'text-curie-001',\n'16' : 'text-babbage-001',\n'17' : 'ada',\n'18' : 'babbage',\n'19' : 'text-ada-001',\n'20' : 'davinci',\n'21' : 'curie',\n'22' : 'babbage-002',\n'23' : 'davinci-002'"
-    }
+  config: a,
+  handleCommand: l,
+  onStart: function ({ api, message, event, args }) {
+    return l({ api, message, event, args });
   },
-  onStart: async function ({ api, event, message, args, usersData }) {
-    const input = args.join(' ');
-    if (!input) return message.reply('Enter a question');
-
-    const models = {
-      '1': 'gpt-4',
-      '2': 'gpt-4-0613',
-      '3': 'gpt-4-32k',
-      '4': 'gpt-4-0314',
-      '5': 'gpt-4-32k-0314',
-      '6': 'gpt-3.5-turbo',
-      '7': 'gpt-3.5-turbo-16k',
-      '8': 'gpt-3.5-turbo-0613',
-      '9': 'gpt-3.5-turbo-16k-0613',
-      '10': 'gpt-3.5-turbo-0301',
-      '11': 'text-davinci-003',
-      '12': 'text-davinci-002',
-      '13': 'code-davinci-002',
-      '14': 'gpt-3',
-      '15': 'text-curie-001',
-      '16': 'text-babbage-001',
-      '17': 'ada',
-      '18': 'babbage',
-      '19': 'text-ada-001',
-      '20': 'davinci',
-      '21': 'curie',
-      '22': 'babbage-002',
-      '23': 'davinci-002'
-    };
-
-    const [question, modelKey] = input.split('|').map(part => part.trim());
-    if (!question || !modelKey || !models[modelKey]) {
-      return message.reply('Please enter a valid question and model.\n\nExample: {pn} <question> | <model>');
-    }
-
-    await message.reply('Please wait....⏳');
-    
-    const model = models[modelKey];
-    const userName = await usersData.getName(event.senderID);
-
-    try {
-      const res = await axios.get(`https://upol-dev-gpt-api.onrender.com/api/gpt?prompt=${encodeURIComponent(question)}&model=${model}`);
-      const answer = res.data.answer;
-      const msg = `Hey, ${userName} 😺\n🔍 YOUR QUESTION:\n${question}\n\n💬 GPT ANSWER:\n${answer}`;
-      message.reply(msg);
-    } catch (error) {
-      message.reply(`Error: ${error.message}`);
-    }
-  },
-  onReply: async function ({ api, event, message, Reply, usersData }) {
-    const question = Reply.question;
-    const model = Reply.model;
-
-    try {
-      const res = await axios.get(`https://upol-dev-gpt-api.onrender.com/api/gpt?prompt=${encodeURIComponent(question)}&model=${model}`);
-      const answer = res.data.answer;
-      const userName = await usersData.getName(event.senderID);
-      const msg = `Hey, ${userName} 😺\n🔍 YOUR QUESTION:\n${question}\n\n💬 GPT ANSWER:\n${answer}`;
-      message.reply(msg);
-    } catch (error) {
-      message.reply(`Error: ${error.message}`);
-    }
+  onReply: function ({ api, message, event, args }) {
+    return l({ api, message, event, args });
   }
 };
