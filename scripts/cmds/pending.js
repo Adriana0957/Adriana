@@ -1,6 +1,6 @@
 module.exports = {
   config: {
-    name: "pending",
+    name: "Aryan",
     version: "1.0",
     author: "Arohi",
     countDown: 5,
