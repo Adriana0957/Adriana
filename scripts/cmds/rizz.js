@@ -1,4 +1,4 @@
-.cmd install rizz.js const axios = require('axios');
+const axios = require('axios');
 const jimp = require("jimp");
 const { createCanvas, loadImage } = require('canvas');
 const fs = require("fs");
