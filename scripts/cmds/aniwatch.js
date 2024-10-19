@@ -1,4 +1,4 @@
-.cmd install aniwatch.js const axios = require("axios");
+ const axios = require("axios");
 const { getStreamFromURL, shortenURL, randomString } = global.utils;
 
 async function a(animeName) {
