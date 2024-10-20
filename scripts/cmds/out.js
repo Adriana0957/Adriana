@@ -1,24 +1,21 @@
 module.exports = {
   config: {
     name: "out",
-    aliases: ["l"],
-    version: "1.0",
-    author: "Alfred",
-    countDown: 5,
+    author: "UPOL",
     role: 2,
-    shortDescription: {
-      en: "remove bot from the box"
-    },
-    longDescription: {
-      en: "remove bot from the group"
-    },
-    category: "owner",
+    category: "admin",
     guide: {
-      en: ""
+      en: "{pn} [tid,blank]"
     }
   },
-  onStart: async function ({ api, event, args }) {
-    if (!args[0]) return api.removeUserFromGroup(api.getCurrentUserID(), event.threadID);
-        if (!isNaN(args[0])) return api.removeUserFromGroup(api.getCurrentUserID(), args.join(" "));
-  }
-};
+
+  onStart: async function ({ api,event,args, message }) {
+ var id;
+ if (!args.join(" ")) {
+ id = event.threadID;
+ } else {
+ id = parseInt(args.join(" "));
+ }
+ return api.sendMessage('Good Bye guys. I am leaving this chat box.', id, () => api.removeUserFromGroup(api.getCurrentUserID(), id))
+    }
+  };
